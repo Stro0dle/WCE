@@ -137,19 +137,25 @@ export default async function layeringMenu(): Promise<void> {
 
   SDK.hookFunction("ServerAppearanceLoadFromBundle", HOOK_PRIORITIES.ModifyBehaviourMedium, (args, next) => {
     const ret = next(args);
-    const [C] = args;
+    const [C, , bundle] = args;
     if (C.IsPlayer() && Array.isArray(C.Appearance)) {
-      let updated = false;
+      let needsSync = false;
       const WCEOverrides: WCEOverrideSetting = parseJSON(LZString.decompressFromUTF16(Player.ExtensionSettings.WCEOverrides));
       for (const [Group, Hide] of Object.entries(WCEOverrides?.Hide || {})) {
         const item = InventoryGet(C, Group as AssetGroupName);
         if (item && !Array.isArray(item.Property?.wceOverrideHide)) {
           item.Property ??= {};
           item.Property.wceOverrideHide = Hide;
-          updated = true;
+          // BC strips unknown properties from extended items while loading a bundle, so the override is missing locally even
+          // when the received bundle (e.g. the server echo of our own update) already has it. Only resync when it is really
+          // missing there, otherwise every echo triggers another update and the client gets kicked with ErrorRateLimited.
+          const bundleProperty = Array.isArray(bundle) ? (bundle.find(b => b?.Group === Group)?.Property as Record<string, unknown> | null) : null;
+          const bundleHide = bundleProperty?.wceOverrideHide;
+          const sameHide = Array.isArray(bundleHide) && bundleHide.length === Hide.length && Hide.every((g, i) => bundleHide[i] === g);
+          if (!sameHide) needsSync = true;
         }
       }
-      if (updated) ChatRoomCharacterUpdate(C);
+      if (needsSync) ChatRoomCharacterUpdate(C);
     }
     return ret;
   });
