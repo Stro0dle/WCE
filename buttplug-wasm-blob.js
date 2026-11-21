@@ -1,0 +1,2 @@
+let e,t,n,r,i,a=(async()=>{var a;r=async function(){if(a==null){let e=await import(`./buttplug_wasm-D4Fg5s29.js`);await e.default(),a=e}},t=function(e){return a.buttplug_create_embedded_wasm_server(e)},n=function(e){a.buttplug_free_embedded_wasm_server(e)},i=function(e,t,n){a.buttplug_client_send_json_message(e,t,n)},e=function(e=`debug`){a.buttplug_activate_env_logger(e)}})();export{a as __tla,e as activateLogging,t as createServer,n as freeServer,r as loadButtplugWasm,i as sendMessage};
+//# sourceMappingURL=buttplug-wasm-blob.js.map
